@@ -18,16 +18,31 @@ typedef struct{
 	int trainID;
 }train;
 
+pthread_mutex_t intersection; // mutex for the train intersection
+
 //main function for each thread
 void *thread_main(void *c){
     train* cart = (train*)c; //set the data to a variable so it can be used
     printf("Cart ID: %d\t Cart Direction: %c\n",cart->trainID,cart->direction);
 }
 
+void arrive(train c){
+
+}
+
+void cross(train c){
+
+}
+
+void leave(train c){
+	
+}
+
 int main (int argc, char* argv[]){
 	pthread_t* trains = malloc((int)strlen(argv[1])*sizeof(pthread_t)); // create an array of threads for as many trains as given	
 	char *str; // hold argv[1] to iterate through characters
 	int id=0; // overall trainID
+	pthread_mutex_init(&intersection,NULL);
 	for(str=argv[1]; *str; str++){
 		train cart;
 		char c=*str;
@@ -40,6 +55,7 @@ int main (int argc, char* argv[]){
 
     int i;
     for(i=0;i<id;i++){pthread_join(trains[i], NULL);}
-
+    pthread_mutex_destroy(&intersection);
+    pthread_exit(NULL);
     return 0;
 }
