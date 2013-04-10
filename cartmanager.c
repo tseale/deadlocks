@@ -69,17 +69,15 @@ void *manage_thread(void *c){
 
 int main (int argc, char* argv[]){
 	pthread_t* trains = malloc((int)strlen(argv[1])*sizeof(pthread_t)); // create an array of threads for as many trains as given	
-    printf("Size: %i\n",(int)strlen(argv[1]));
-	char *str; // hold argv[1] to iterate through characters
-	int id=0; // overall trainID
-	for(str=argv[1]; *str; str++){
-		train cart;
+	train* cart = malloc((int)strlen(argv[1])*sizeof(train));
+    char *str; // hold argv[1] to iterate through characters
+    int id;
+	for(str=argv[1],id=0; *str; str++,id++){
 		char c=*str;
-		cart.direction=c;
-		cart.trainID=id;
+		cart[id].direction=c;
+		cart[id].trainID=id;
 		//printf("Cart Direction: %c\tCart ID: %d\n",cart.direction,cart.trainID);
-		pthread_create(&trains[id], NULL, manage_thread, (void *)&cart);
-		id++;
+		pthread_create(&trains[id], NULL, manage_thread, (void *)&cart[id]);
 	}
 
     pthread_cond_signal(&northQ);
@@ -89,7 +87,10 @@ int main (int argc, char* argv[]){
 
     int i;
     for(i=0;i<id;i++){pthread_join(trains[i], NULL);}
-
+    pthread_cond_destroy(&northQ);
+    pthread_cond_destroy(&eastQ);
+    pthread_cond_destroy(&southQ);
+    pthread_cond_destroy(&westQ);
     pthread_mutex_destroy(&intersection);
     pthread_exit(NULL);
     return 0;
