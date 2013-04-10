@@ -19,33 +19,33 @@ typedef struct{
 	int trainID;
 }train;
 
-int count = 0;
 pthread_mutex_t intersection = PTHREAD_MUTEX_INITIALIZER; // mutex for the train intersection
-pthread_cond_t northQ,eastQ,southQ,westQ;
-//bool ncurr = false, ecurr = false, scurr = false, wcurr = false;
-
+pthread_cond_t northQ=PTHREAD_COND_INITIALIZER,eastQ=PTHREAD_COND_INITIALIZER,southQ=PTHREAD_COND_INITIALIZER,westQ=PTHREAD_COND_INITIALIZER;
 
 void arrive(train c){
     pthread_mutex_lock(&intersection);
+    char* direction;
     switch(c.direction){
         case 'n':
+            direction="North";
             pthread_cond_wait(&northQ,&intersection);
             break;
         case 'e':
+            direction="East";
             pthread_cond_wait(&eastQ,&intersection);
             break;
         case 's':
+            direction="South";
             pthread_cond_wait(&southQ,&intersection);
             break;
         case 'w':
+            direction="West";
             pthread_cond_wait(&westQ,&intersection);
             break;
         default:
-            printf("YOU FUCKED UP\n");
             break;
     }
-    //count++;
-    printf("Arrive:\tTrain %d\t Direction %c\n",c.trainID,c.direction);
+    printf("CART %d from %s arrives at crossing\n",c.trainID,direction);
     pthread_mutex_unlock(&intersection);    
     
 }
@@ -69,15 +69,16 @@ void *manage_thread(void *c){
 
 int main (int argc, char* argv[]){
 	pthread_t* trains = malloc((int)strlen(argv[1])*sizeof(pthread_t)); // create an array of threads for as many trains as given	
+    printf("Size: %i\n",(int)strlen(argv[1]));
 	char *str; // hold argv[1] to iterate through characters
-	int id=1; // overall trainID
+	int id=0; // overall trainID
 	for(str=argv[1]; *str; str++){
 		train cart;
 		char c=*str;
 		cart.direction=c;
 		cart.trainID=id;
 		//printf("Cart Direction: %c\tCart ID: %d\n",cart.direction,cart.trainID);
-		pthread_create(&trains[id-1], NULL, manage_thread, (void *)&cart);
+		pthread_create(&trains[id], NULL, manage_thread, (void *)&cart);
 		id++;
 	}
 
@@ -88,7 +89,6 @@ int main (int argc, char* argv[]){
 
     int i;
     for(i=0;i<id;i++){pthread_join(trains[i], NULL);}
-    //printf("count %d\n",count);
 
     pthread_mutex_destroy(&intersection);
     pthread_exit(NULL);
