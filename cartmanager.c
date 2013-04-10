@@ -68,8 +68,8 @@ void cross(train c){
             if (wcurr == 1){
                 pthread_cond_wait(&northC,&intersection);
             }
-            sleep(2);
             ncurr = 0;
+            sleep(2);
             pthread_cond_signal(&northQ);
             pthread_cond_signal(&eastC);
             break;
@@ -78,8 +78,8 @@ void cross(train c){
             if (ncurr == 1){
                 pthread_cond_wait(&eastC,&intersection);
             }
-            sleep(2);
             ecurr = 0;
+            sleep(2);
             pthread_cond_signal(&eastQ);
             pthread_cond_signal(&southC);
             break;
@@ -88,8 +88,8 @@ void cross(train c){
             if (ecurr == 1){
                 pthread_cond_wait(&southC,&intersection);
             }
-            sleep(2);
             scurr = 0;
+            sleep(2);
             pthread_cond_signal(&southQ);
             pthread_cond_signal(&westC);
             break;
@@ -98,20 +98,22 @@ void cross(train c){
             if (scurr == 1){
                 pthread_cond_wait(&westC,&intersection);
             }
-            sleep(2);
             wcurr = 0;
+            sleep(2);
             pthread_cond_signal(&westQ);
             pthread_cond_signal(&northC);
             break;
         default:
             break;
     }
-    printf("CART %d from %s crossed\n",c.trainID,direction);
+    printf("CART %d from %s leaving crossing\n",c.trainID,direction);
 	pthread_mutex_unlock(&intersection);
 }
 
-void leave(train c){
+void leave(){
+    pthread_mutex_lock(&intersection);
     active_carts--;
+    pthread_mutex_unlock(&intersection);
 }
 
 //main function for each thread
@@ -120,7 +122,7 @@ void *manage_thread(void *c){
     //printf("Main:\tTrain %d\t Direction %c\n",cart->trainID,cart->direction);
     arrive(*cart);
     cross(*cart);
-    leave(*cart);
+    leave();
 }
 
 int main (int argc, char* argv[]){
@@ -141,28 +143,34 @@ int main (int argc, char* argv[]){
     pthread_cond_signal(&eastQ);
     pthread_cond_signal(&southQ);
     pthread_cond_signal(&westQ);
-
     int deadlock_counter = 0;
-    while(active_threads != 0){
-        if(ncurr == ecurr == scurr == wcurr == 1){
-            printf("DEADLOCK MOTHERFUCKER!");
+
+    while(active_carts != 0){
+        sleep(3);
+        if(ncurr==1 && ecurr==1 && scurr==1 && wcurr==1){
+            char* direction;
             int next = deadlock_counter%4;
             switch(next){
                 case 0:
+                    direction="North";
                     pthread_cond_signal(&northC);
                     break;
                 case 1:
+                    direction="East";
                     pthread_cond_signal(&eastC);
                     break;
                 case 2:
+                    direction="South";
                     pthread_cond_signal(&southC);
                     break;
                 case 3:
+                    direction="West";
                     pthread_cond_signal(&westC);
                     break;
                 default:
                     break;
             }
+            printf("DEADLOCK: CART jam detected, signalling %s to go\n",direction);
             deadlock_counter++;
         }
     }
