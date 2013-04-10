@@ -14,22 +14,24 @@ Project 4 - Synchronization & Deadlocks
 #include <time.h>
 #include <string.h>
 
+// struct for train information
 typedef struct{
 	char direction;
 	int trainID;
 }train;
 
 pthread_mutex_t intersection = PTHREAD_MUTEX_INITIALIZER; // mutex for the train intersection
-pthread_cond_t northQ=PTHREAD_COND_INITIALIZER,eastQ=PTHREAD_COND_INITIALIZER,southQ=PTHREAD_COND_INITIALIZER,westQ=PTHREAD_COND_INITIALIZER;
-pthread_cond_t northC=PTHREAD_COND_INITIALIZER,eastC=PTHREAD_COND_INITIALIZER,southC=PTHREAD_COND_INITIALIZER,westC=PTHREAD_COND_INITIALIZER;
-int ncurr = 0, ecurr = 0, scurr = 0, wcurr = 0;
-int crossing = 0;
+pthread_cond_t northQ=PTHREAD_COND_INITIALIZER,eastQ=PTHREAD_COND_INITIALIZER,southQ=PTHREAD_COND_INITIALIZER,westQ=PTHREAD_COND_INITIALIZER; // condition variables for queue management
+pthread_cond_t northC=PTHREAD_COND_INITIALIZER,eastC=PTHREAD_COND_INITIALIZER,southC=PTHREAD_COND_INITIALIZER,westC=PTHREAD_COND_INITIALIZER; // condition variables for right first rule
+int ncurr = 0, ecurr = 0, scurr = 0, wcurr = 0; // if there is a cart at the crossing for any given direction
 int active_carts = 0;
 
-
+// handle how each train advances through the queue to arrive at the crossing
 void arrive(train c){
-    pthread_mutex_lock(&intersection);
-    char* direction;
+    pthread_mutex_lock(&intersection); // lock the mutex
+    char* direction; // to make printing nicer
+    // handle each direction, carts not at the crossing are waiting for the cart ahead to signal that they have crossed, so this cart can arrive
+    // *curr variables indicate whether or not a cart is at the crossing, adjust accordingly
     switch(c.direction){
         case 'n':
             direction="North";
@@ -55,59 +57,71 @@ void arrive(train c){
             break;
     }
     printf("CART %d from %s arrives at crossing\n",c.trainID,direction);
-    pthread_mutex_unlock(&intersection);    
+    pthread_mutex_unlock(&intersection); // lock the mutex 
     
 }
 
+// handle crossing the intersection with a train
 void cross(train c){
-    pthread_mutex_lock(&intersection);
-    char* direction;
+    pthread_mutex_lock(&intersection); // lock the mutex
+    char* direction; // to make printing nicer
+    // handle each direction
+    /*
+        North yields to West
+        West yields to South
+        South yields to East
+        East yields to North
+    */
     switch(c.direction){
         case 'n':
             direction="North";
+            // if a cart is at the west, north yields to it
+            // waits for the signla to go...
             if (wcurr == 1){
                 pthread_cond_wait(&northC,&intersection);
             }
-            ncurr = 0;
-            sleep(2);
-            pthread_cond_signal(&northQ);
-            pthread_cond_signal(&eastC);
+            pthread_cond_signal(&northQ); ncurr = 0; // send a signal that the next north can go, update the variable accordingly
+            pthread_cond_signal(&eastC); // tell east it's chill to go now
+            sleep(1);
             break;
         case 'e':
             direction="East";
+            // if a cart is at the north, east yields to it
+            // waits for the signla to go...
             if (ncurr == 1){
                 pthread_cond_wait(&eastC,&intersection);
             }
-            ecurr = 0;
-            sleep(2);
-            pthread_cond_signal(&eastQ);
-            pthread_cond_signal(&southC);
+            pthread_cond_signal(&eastQ); ecurr = 0; // send a signal that the next east can go, update the variable accordingly
+            pthread_cond_signal(&southC); // tell south it's chill to go now
+            sleep(1);
             break;
         case 's':
             direction="South";
+            // if a cart is at the east, south yields to it
+            // waits for the signla to go...
             if (ecurr == 1){
                 pthread_cond_wait(&southC,&intersection);
             }
-            scurr = 0;
-            sleep(2);
-            pthread_cond_signal(&southQ);
-            pthread_cond_signal(&westC);
+            pthread_cond_signal(&southQ); scurr = 0; // send a signal that the next south can go, update the variable accordingly
+            pthread_cond_signal(&westC); // tell west it's chill to go now
+            sleep(1);
             break;
         case 'w':
             direction="West";
+            // if a cart is at the south, west yields to it
+            // waits for the signla to go...
             if (scurr == 1){
                 pthread_cond_wait(&westC,&intersection);
             }
-            wcurr = 0;
-            sleep(2);
-            pthread_cond_signal(&westQ);
-            pthread_cond_signal(&northC);
+            pthread_cond_signal(&westQ); wcurr = 0; // send a signal that the next west can go, update the variable accordingly
+            pthread_cond_signal(&northC); // tell north it's chill to go now
+            sleep(1);
             break;
         default:
             break;
     }
     printf("CART %d from %s leaving crossing\n",c.trainID,direction);
-	pthread_mutex_unlock(&intersection);
+	pthread_mutex_unlock(&intersection); // unlock the mutex
 }
 
 void leave(){
@@ -119,7 +133,6 @@ void leave(){
 //main function for each thread
 void *manage_thread(void *c){
     train* cart = (train*)c; //set the data to a variable so it can be used
-    //printf("Main:\tTrain %d\t Direction %c\n",cart->trainID,cart->direction);
     arrive(*cart);
     cross(*cart);
     leave();
@@ -145,11 +158,13 @@ int main (int argc, char* argv[]){
     pthread_cond_signal(&westQ);
     int deadlock_counter = 0;
 
+    // check for deadlock every 3 seconds
     while(active_carts != 0){
         sleep(3);
         if(ncurr==1 && ecurr==1 && scurr==1 && wcurr==1){
             char* direction;
-            int next = deadlock_counter%4;
+            // alternate which cart we give priority to cross
+            int next = deadlock_counter%4; // so the counter always is 0-3
             switch(next){
                 case 0:
                     direction="North";
@@ -175,6 +190,7 @@ int main (int argc, char* argv[]){
         }
     }
 
+    // join and destroy everything
     int i;
     for(i=0;i<id;i++){pthread_join(trains[i], NULL);}
     pthread_cond_destroy(&northQ);pthread_cond_destroy(&eastQ);pthread_cond_destroy(&southQ);pthread_cond_destroy(&westQ);
