@@ -20,11 +20,12 @@ typedef struct{
 }train;
 
 pthread_mutex_t intersection = PTHREAD_MUTEX_INITIALIZER; // mutex for the train intersection
-pthread_cond_t queueCart = PTHREAD_COND_INITIALIZER;
-pthread_cond_t precedence = PTHREAD_COND_INITIALIZER;
+pthread_cond_t northQ,eastQ,southQ,westQ;
+bool ncurr = false, ecurr = false, scurr = false, wcurr = false;
 
 
 void arrive(train c){
+    
 
 }
 
