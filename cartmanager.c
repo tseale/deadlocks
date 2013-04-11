@@ -30,7 +30,7 @@ pthread_cond_t northC=PTHREAD_COND_INITIALIZER,eastC=PTHREAD_COND_INITIALIZER,so
 int ncurr = 0, ecurr = 0, scurr = 0, wcurr = 0; // if there is a cart at the crossing for any given direction
 int active_carts = 0;
 int nstall=0, estall=0, sstall=0, wstall=0; // to help prevent starvation! #yay
-int ndead = 0, sdead = 0, wdead = 0, edead = 0;
+int ndead = 0, sdead = 0, wdead = 0, edead = 0; // for deadlock situations
 
 // handle how each train advances through the queue to arrive at the crossing
 void arrive(train c){   
@@ -69,6 +69,9 @@ void arrive(train c){
 }
 
 // handle crossing the intersection with a train
+/*
+Starvation prevention works, but sporadically... not sure how to fix it...
+*/
 void cross(train c){
     pthread_mutex_lock(&intersection); // lock the mutex
     char* direction; // to make printing nicer
@@ -80,14 +83,12 @@ void cross(train c){
         East yields to North
     */
 
-
     switch(c.direction){
         case 'n':
             direction="North";
             // if a cart is at the west, north yields to it
             // waits for the signla to go...
             while ((wcurr == 1 && ndead == 0 && nstall != 2) || estall == 2 || wstall == 2 || sstall ==2 ){
-                if(estall == 2){pthread_cond_signal(&eastC);}
                 pthread_cond_wait(&northC,&intersection);
             }
             if (nstall==2){printf("STARVATION AVERTED: %s\n",direction);}
@@ -182,6 +183,7 @@ int main (int argc, char* argv[]){
 		pthread_create(&trains[id], NULL, manage_thread, (void *)&cart[id]);
 	}
 
+    // start the initial thread execution
     pthread_cond_signal(&northQ);
     pthread_cond_signal(&eastQ);
     pthread_cond_signal(&southQ);
@@ -192,10 +194,12 @@ int main (int argc, char* argv[]){
     while(active_carts != 0){
         sleep(3);
         //printf("%d %d %d %d\n",ncurr,ecurr,scurr,wcurr);
+        // if we find a deadlock
         if(ncurr==1 && ecurr==1 && scurr==1 && wcurr==1){
             char* direction;
             // alternate which cart we give priority to cross
             int next = deadlock_counter%4; // so the counter always is 0-3
+            // send the proper signal to eliminate the deadlock situation
             switch(next){
                 case 0:
                     direction="North";
