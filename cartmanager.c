@@ -70,7 +70,6 @@ void arrive(train c){
 
 // handle crossing the intersection with a train
 void cross(train c){
-    printf("estall: %d\n",estall);
     pthread_mutex_lock(&intersection); // lock the mutex
     char* direction; // to make printing nicer
     // handle each direction
@@ -80,12 +79,15 @@ void cross(train c){
         South yields to East
         East yields to North
     */
+
+
     switch(c.direction){
         case 'n':
             direction="North";
             // if a cart is at the west, north yields to it
             // waits for the signla to go...
-            while (wcurr == 1 && ndead == 0 && nstall!=2){
+            while ((wcurr == 1 && ndead == 0 && nstall != 2) || estall == 2 || wstall == 2 || sstall ==2 ){
+                if(estall == 2){pthread_cond_signal(&eastC);}
                 pthread_cond_wait(&northC,&intersection);
             }
             if (nstall==2){printf("STARVATION AVERTED: %s\n",direction);}
@@ -94,14 +96,14 @@ void cross(train c){
             nstall=0;
             pthread_cond_signal(&eastC); // tell east it's chill to go now
             pthread_cond_signal(&northQ); 
-            if(ecurr == 1){estall++;}
+            if(ecurr == 1){estall++;}// tell east it's chill to go now
             pthread_mutex_unlock(&northM);
             break;
         case 'e':
             direction="East";
             // if a cart is at the north, east yields to it
             // waits for the signla to go...
-            while ((ncurr == 1 && edead == 0) || estall!=2){
+            while ((ncurr == 1 && edead == 0 && estall != 2)|| nstall == 2 || wstall == 2 || sstall ==2){
                 pthread_cond_wait(&eastC,&intersection);
             }
             if (estall==2){printf("STARVATION AVERTED: %s\n",direction);}
@@ -117,7 +119,7 @@ void cross(train c){
             direction="South";
             // if a cart is at the east, south yields to it
             // waits for the signla to go...
-            while (ecurr == 1 && sdead == 0 && sstall!=2){
+            while ((ecurr == 1 && sdead == 0)|| estall == 2 || wstall == 2 || nstall ==2){
                 pthread_cond_wait(&southC,&intersection);
             }
             if (sstall==2){printf("STARVATION AVERTED: %s\n",direction);}
@@ -133,7 +135,7 @@ void cross(train c){
             direction="West";
             // if a cart is at the south, west yields to it
             // waits for the signla to go...
-            while (scurr == 1 && wdead == 0 && wstall!=2){
+            while ((scurr == 1 && wdead == 0)|| estall == 2 || nstall == 2 || sstall ==2){
                 pthread_cond_wait(&westC,&intersection);
             }
             if (wstall==2){printf("STARVATION AVERTED: %s\n",direction);}
