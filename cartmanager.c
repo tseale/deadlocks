@@ -113,8 +113,8 @@ void cross(train c){
             estall = 0;
             pthread_cond_signal(&southC); // tell south it's chill to go now
             pthread_cond_signal(&eastQ); 
-            pthread_mutex_unlock(&eastM);
             if(scurr == 1){sstall++;}
+            pthread_mutex_unlock(&eastM);
             break;
         case 's':
             direction="South";
@@ -225,7 +225,7 @@ int main (int argc, char* argv[]){
                     break;
             }
             printf("DEADLOCK: CART jam detected, signalling %s to go\n",direction);
-            deadlock_counter++;
+            deadlock_counter++; // update the modulus counter
         }
     }
 
