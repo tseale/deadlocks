@@ -89,9 +89,7 @@ void cross(train c){
             // if a cart is at the west, north yields to it
             // waits for the signla to go...
             while ((wcurr == 1 && ndead == 0 && nstall != 2) || estall == 2 || wstall == 2 || sstall ==2 ){
-                //printf("North IN\n");
                 pthread_cond_wait(&northC,&intersection);
-                //printf("North OUT\n");
             }
             if (nstall==2){printf("STARVATION AVERTED: %s\n",direction);}
             ncurr = 0; ndead=0; // send a signal that the next north can go, update the variable accordingly
@@ -107,9 +105,7 @@ void cross(train c){
             // if a cart is at the north, east yields to it
             // waits for the signla to go...
             while ((ncurr == 1 && edead == 0 && estall != 2)|| nstall == 2 || wstall == 2 || sstall ==2){
-                //printf("East IN\n");
                 pthread_cond_wait(&eastC,&intersection);
-                //printf("East OUT\n");
             }
             if (estall==2){printf("STARVATION AVERTED: %s\n",direction);}
             ecurr = 0; edead=0;// send a signal that the next east can go, update the variable accordingly
@@ -124,10 +120,8 @@ void cross(train c){
             direction="South";
             // if a cart is at the east, south yields to it
             // waits for the signla to go...
-            while ((ecurr == 1 && sdead == 0)|| estall == 2 || wstall == 2 || nstall ==2){
-                //printf("South IN\n");
+            while ((ecurr == 1 && sdead == 0 && sstall != 2)|| estall == 2 || wstall == 2 || nstall ==2){
                 pthread_cond_wait(&southC,&intersection);
-                //printf("South OUT\n");
             }
             if (sstall==2){printf("STARVATION AVERTED: %s\n",direction);}
             scurr = 0; sdead=0;// send a signal that the next south can go, update the variable accordingly
@@ -142,10 +136,8 @@ void cross(train c){
             direction="West";
             // if a cart is at the south, west yields to it
             // waits for the signla to go...
-            while ((scurr == 1 && wdead == 0)|| estall == 2 || nstall == 2 || sstall ==2){
-                //printf("West IN\n");
+            while ((scurr == 1 && wdead == 0 && wstall != 2)|| estall == 2 || nstall == 2 || sstall ==2){
                 pthread_cond_wait(&westC,&intersection);
-                //printf("West OUT\n");
             }
             if (wstall==2){printf("STARVATION AVERTED: %s\n",direction);}
             wcurr = 0; wdead=0;// send a signal that the next west can go, update the variable accordingly
@@ -191,11 +183,6 @@ int main (int argc, char* argv[]){
 		pthread_create(&trains[id], NULL, manage_thread, (void *)&cart[id]);
 	}
 
-    // start the initial thread execution
-    pthread_cond_signal(&northQ);
-    pthread_cond_signal(&eastQ);
-    pthread_cond_signal(&southQ);
-    pthread_cond_signal(&westQ);
     int deadlock_counter = 0;
 
     // check for deadlock every 3 seconds

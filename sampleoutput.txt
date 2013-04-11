@@ -1,0 +1,89 @@
+input: 
+
+nsnsnsnsnsn
+
+output:
+
+CART 0 from North arrives at crossing
+CART 1 from South arrives at crossing
+CART 0 from North leaving crossing
+CART 2 from North arrives at crossing
+CART 2 from North leaving crossing
+CART 6 from North arrives at crossing
+CART 6 from North leaving crossing
+CART 8 from North arrives at crossing
+CART 1 from South leaving crossing
+CART 3 from South arrives at crossing
+CART 3 from South leaving crossing
+CART 5 from South arrives at crossing
+CART 5 from South leaving crossing
+CART 7 from South arrives at crossing
+CART 7 from South leaving crossing
+CART 9 from South arrives at crossing
+CART 8 from North leaving crossing
+CART 10 from North arrives at crossing
+CART 9 from South leaving crossing
+CART 10 from North leaving crossing
+CART 4 from North arrives at crossing
+CART 4 from North leaving crossing
+
+input:
+
+nseenseesn
+
+output:
+
+CART 0 from North arrives at crossing
+CART 1 from South arrives at crossing
+CART 2 from East arrives at crossing
+CART 0 from North leaving crossing
+CART 4 from North arrives at crossing
+CART 4 from North leaving crossing
+STARVATION AVERTED: East
+CART 9 from North arrives at crossing
+CART 2 from East leaving crossing
+CART 3 from East arrives at crossing
+CART 9 from North leaving crossing
+CART 3 from East leaving crossing
+CART 6 from East arrives at crossing
+STARVATION AVERTED: South
+CART 1 from South leaving crossing
+CART 5 from South arrives at crossing
+CART 6 from East leaving crossing
+CART 7 from East arrives at crossing
+CART 7 from East leaving crossing
+STARVATION AVERTED: South
+CART 5 from South leaving crossing
+CART 8 from South arrives at crossing
+CART 8 from South leaving crossing
+
+input:
+
+nsewwesnwe
+
+output:
+
+CART 0 from North arrives at crossing
+CART 1 from South arrives at crossing
+CART 2 from East arrives at crossing
+CART 3 from West arrives at crossing
+CART 0 from North leaving crossing
+CART 7 from North arrives at crossing
+DEADLOCK: CART jam detected, signalling North to go
+CART 7 from North leaving crossing
+STARVATION AVERTED: East
+CART 2 from East leaving crossing
+CART 5 from East arrives at crossing
+CART 5 from East leaving crossing
+CART 9 from East arrives at crossing
+STARVATION AVERTED: South
+CART 1 from South leaving crossing
+CART 6 from South arrives at crossing
+CART 9 from East leaving crossing
+CART 6 from South leaving crossing
+STARVATION AVERTED: West
+CART 3 from West leaving crossing
+CART 4 from West arrives at crossing
+CART 4 from West leaving crossing
+CART 8 from West arrives at crossing
+CART 8 from West leaving crossing
